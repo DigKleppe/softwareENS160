@@ -1,0 +1,63 @@
+
+<!doctype html>
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>ENS160</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+    <script src="js/common.js" type="text/javascript" charset="utf-8"></script>
+    <!-- <script src="js/mainPage.js" type="text/javascript" charset="utf-8"></script> -->
+   
+    <!-- <script src="js/chart-utils.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="js/chart.umd.min.js" type="text/javascript" charset="utf-8"></script>
+ -->
+    <script src="js/chartPage.js" type="text/javascript" charset="utf-8"></script>
+
+
+    <script type="text/javascript">
+        google.charts.load('current', {
+            'packages': ['corechart']
+        });
+
+        google.charts.setOnLoadCallback(initChart);
+
+    </script>
+
+</head>
+ <body>
+<!--     <div id="hourChart" "width: 100%; height: 800px" style="border:1px solid #000000; "></div>
+    <div id="dayChart" "width: 100%; height: 800px style="border:1px solid #000000;"></div> -->
+    <div id="hourChart" style="width: 100%; height: 80% border:1px solid #000000"></div>
+    <div id="dayChart" style="width: 100%; height: 900px border:1px solid #000000"></div>
+
+    <input type="checkbox" id="AQ1cb" class="save-cb-state" name="AQ1cb" value="yes">
+    <label for="AQ1cb">AQ1</label><br>
+
+
+    <input type="checkbox" id="ESO2cb" class="save-cb-state" name="ESO2cb" value="yes">
+    <label for="ESO2cb">ESO2</label><br>
+    <input type="checkbox" id="Tvoccb" class="save-cb-state" name="Tvoccb" value="yes">
+    <label for="Tvoccb">Tvoc</label><br>
+    <input type="checkbox" id="Rs0cb" class="save-cb-state" name="Rs0cb" value="yes">
+    <label for="Rs0cb">Rs0</label><br>
+    <input type="checkbox" id="Rs1cb" class="save-cb-state" name="Rs1cb" value="yes">
+    <label for="Rs1cb">Rs1</label><br>
+    <input type="checkbox" id="Rs2cb" class="save-cb-state" name="Rs2cb" value="yes">
+    <label for="Rs1cb">Rs2</label><br>
+    <input type="checkbox" id="Rs3cb" class="save-cb-state" name="Rs3cb" value="yes">
+    <label for="Rs3cb">Rs3</label><br>
+
+
+    <table class="styled-table" id="sensorInfoTable""></table>
+	    <br>
+        <button class=" button-3" onclick="clearLog()">log wissen</button>
+        <button class="button-3" onclick="clearChart()">grafiek wissen</button>
+        <br>
+        <button class="button-3" onclick="forgetWifi()">vergeet Wifi netwerk en reset</button>
+
+</body>
+</html> 
