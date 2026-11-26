@@ -18,4 +18,4 @@ dependencies:
   # zhw990217/lvgl_esp32_drivers: ^1.0.1  moved to components for small change
   espressif/mdns: ^1.8.2
   espressif/arduino-esp32: ^3.3.12
-  
+  espressif/led_strip: ^3.1.1

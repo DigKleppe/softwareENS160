@@ -17,6 +17,8 @@
 #include <esp_err.h>
 #include <esp_log.h>
 
+#define TIMEOUT 50 // * 100ms
+
 #define DAYLOGINTERVAL 5   // minutes
 #define HOURLOGINTERVAL 10 // seconds
 
@@ -41,6 +43,8 @@ uint32_t Rs3;
 uint8_t AQi;
 
 log_t lastVal;
+
+//I2C (Wire): GPIO 8 (SDA) and GPIO 9 (SCL). You can reassign pins in code before Wire.begin() (e.g., Wire.begin(sdaPin, sclPin)).
 
 // esp_err_t SPS30AddDeviceToBus(i2c_master_bus_handle_t *bus_handle) {
 
@@ -78,12 +82,12 @@ void setup() {
 	Wire.begin();
 	ens16x.begin(&Wire, I2C_ADDRESS);
 
-	printf("begin..");
+	printf("begin..\n");
 	while (ens16x.init() != true) {
-		printf(".");
+		printf(".\n");
 		delay(1000);
 	}
-	printf("success");
+	printf("success\n");
 
 #ifdef USE_INTERRUPT
 	ens16x.setInterruptPin(INTN);
@@ -143,6 +147,7 @@ void sensorTask(void *parameters) {
 	float avGvalues[NR_MEASVALUES];
 	bool statusError;
 	int skipFirstSamplesFromLog = SKIPFIRSTSAMPLES;
+	int timeOutTimer = TIMEOUT;
 
 	setup();
 
@@ -198,9 +203,18 @@ void sensorTask(void *parameters) {
 	//   for (repetition = 0; repetition < 50; repetition++) {
 	while (1) {
 		vTaskDelay(100 / portTICK_PERIOD_MS);
+		if ( timeOutTimer)
+			timeOutTimer--;
+		else {
+			printf("ENS160 timeout\n\r");
+    		ens16x.reset();                                                                         
+   			ens16x.startStandardMeasure();
+			timeOutTimer = TIMEOUT;
+		}
 		statusError = false;
 		if (ens16x.update() == RESULT_OK) {
 			if (ens16x.hasNewData()) {
+				timeOutTimer = TIMEOUT;
 				printf("\nAQI UBA:");
 				printf("%d", (uint8_t)ens16x.getAirQualityIndex_UBA());
 				printf("\tTVOC:");
@@ -250,7 +264,8 @@ void sensorTask(void *parameters) {
 					skipFirstSamplesFromLog--;
 				else {
 					for (int n = 0; n < NR_MEASVALUES; n++) { // average mc's
-						averager1[n].write((int)1000.0 * values[n]);
+					//	averager1[n].write((int)1000.0 * values[n]);
+						averager1[n].write(values[n]); // value R2 > 100000 
 						avGvalues[n] = averager1[n].average() / 1000;
 					}
 					displayMssg.values = &avGvalues[0];
@@ -284,11 +299,6 @@ void sensorTask(void *parameters) {
 							memcpy(logValue.values, avGvalues, sizeof(logValue.values));
 							logValue.timeStamp = timeStamp;
 							hourLog.add(&logValue);
-							// for ( int n = 0;n< 100;n++) {
-							//  			logValue.timeStamp = timeStamp++;
-							//  			hourLog.add(&logValue);
-							//  			dayLog.add(&logValue);
-							// }
 						}
 
 						if (lastMinute != timeinfo.tm_min) {
@@ -393,13 +403,15 @@ const CGIdesc_t sensorInfoDescriptorTable[] = {{measLabelTxt[0], &lastVal.values
 											   {measLabelTxt[4], &lastVal.values[4], FLT, 1}, {measLabelTxt[5], &lastVal.values[5], FLT, 1},
 											   {measLabelTxt[6], &lastVal.values[6], FLT, 1}, {NULL, NULL, INT, 0}};
 
+//const CGIdesc_t sensorInfoDescriptorTable[] = {{measLabelTxt[5], &lastVal.values[5], FLT, 1}, {NULL, NULL, INT, 0}};
+
 int getSensorInfoScript(char *pBuffer, int count) {
 	int len = 0;
 
 	switch (scriptState) {
 	case 0:
 		scriptState++;
-		len = sprintf(pBuffer, "Partikel, Waarde\n");
+		len = sprintf(pBuffer, "Meting, Waarde\n");
 		len += getCGItable(sensorInfoDescriptorTable, pBuffer + len, count);
 		return len;
 		break;

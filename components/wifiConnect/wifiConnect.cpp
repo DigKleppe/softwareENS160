@@ -544,7 +544,15 @@ void connectTask(void *pvParameters) {
 				break;
 			}
 			break;
+#else
+				connectStep = 50; // to station
+				break;
+
+			default:
+				break;
+			}
 #endif
+
 		case 20:
 			switch (connectStatus) {
 			case IP_RECEIVED:

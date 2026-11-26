@@ -76,16 +76,17 @@ function initCharts() {
     var activeSeries = 1;
     hourChart = new google.visualization.LineChart(document.getElementById('hourChart'));
     hourData = new google.visualization.DataTable();
-    dayChart = new google.visualization.LineChart(document.getElementById('dayChart'));
-    dayData = new google.visualization.DataTable();
+    // dayChart = new google.visualization.LineChart(document.getElementById('dayChart'));
+    // dayData = new google.visualization.DataTable();
     hourData.addColumn('string', 'Time');
-    dayData.addColumn('string', 'Time');
+
+//   dayData.addColumn('string', 'Time');
     for (var m = 0; m < NRItems; m++) {
         var cb = document.getElementById(cbIDs[m]);
         if (cb) {
             if (cb.checked) {
                 hourData.addColumn('number', displayNames[m]);
-                dayData.addColumn('number', displayNames[m]);
+   //             dayData.addColumn('number', displayNames[m]);
                 chartSeries[m] = activeSeries;
                 activeSeries++;
             }
@@ -101,16 +102,18 @@ function initCharts() {
 };
 
 function initChart() {
-    window.addEventListener('load', loadCBs());
+   window.addEventListener('load', loadCBs());
     window.addEventListener('DOMContentLoaded', initCharts());
 
 };
 
 function clear() {
     hourData.removeRows(0, hourData.getNumberOfRows());
-    dayData.removeRows(0, dayData.getNumberOfRows());
-    dayChart.draw(dayData, options);
-    hourChart.draw(hourData, options);
+hourChart.draw(hourData, options);
+    
+//dayData.removeRows(0, dayData.getNumberOfRows());
+//    dayChart.draw(dayData, options);
+    
 }
 
 function clearChart() {
@@ -215,8 +218,8 @@ function timer() {
     else {
         if (firstRequest) {
             clear();
-            arr = getItem("getDayLogMeasValues");
-            plotLog(dayChart, arr);
+            // arr = getItem("getDayLogMeasValues");
+            // plotLog(dayChart, arr);
             arr = getItem("getHourLogMeasValues");
             plotLog(hourChart, arr);
             firstRequest = false;
@@ -236,21 +239,21 @@ function timer() {
                         }
                         nrAverages++;
 
-                        dayLogPrescaler--;
-                        if (dayLogPrescaler == 0) {
-                            dayLogPrescaler = DAYLOGINTERVAL / REQUESTINTERVAL;
-                            var str;
-                            str = arr[0].toString() + ","; // timestamp
-                            for (var m = 0; m < NRItems; m++) {
-                                str += (averagedValues[m] / nrAverages).toString();
-                                if (m < NRItems - 1)
-                                    str += ",";
-                                else
-                                    str += "\n";
-                            }
-                            nrAverages = 0;
-                            plotLog(dayChart, str);
-                        }
+                        // dayLogPrescaler--;
+                        // if (dayLogPrescaler == 0) {
+                        //     dayLogPrescaler = DAYLOGINTERVAL / REQUESTINTERVAL;
+                        //     var str;
+                        //     str = arr[0].toString() + ","; // timestamp
+                        //     for (var m = 0; m < NRItems; m++) {
+                        //         str += (averagedValues[m] / nrAverages).toString();
+                        //         if (m < NRItems - 1)
+                        //             str += ",";
+                        //         else
+                        //             str += "\n";
+                        //     }
+                        //     nrAverages = 0;
+                        //     plotLog(dayChart, str);
+                        // }
                     }
                 }
             }

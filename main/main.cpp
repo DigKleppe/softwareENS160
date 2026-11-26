@@ -11,9 +11,12 @@
 #include "sensorTask.h"
 
 #include "settings.h"
-#include "wifiConnect.h"
 #include "time.h"
+#include "wifiConnect.h"
+
 #include "guiTask.h"
+
+#include "ledTask.h"
 
 TaskHandle_t guiCommonTaskh;
 TaskHandle_t guiTaskh;
@@ -33,7 +36,7 @@ extern "C" void app_main() {
 	char str[45];
 	bool ipShown = false;
 	int ipShowTimer;
-		time_t now = 0;
+	time_t now = 0;
 	struct tm timeinfo;
 	int lastSecond = 0;
 
@@ -58,8 +61,8 @@ extern "C" void app_main() {
 	systemInfo.startUps++;
 	strcpy(userSettings.moduleName, "ENS160");
 
-	saveSettings();
-	
+	//saveSettings();
+	startLEDs();
 	wifiConnect();
 
 	// i2c_master_bus_init(&bus_handle);
@@ -70,7 +73,7 @@ extern "C" void app_main() {
 
 	xTaskCreate(sensorTask, "sensorTask", 2 * 4096, NULL, 0, NULL);
 
-	displayMssg.str1 = str;
+	// displayMssg.str1 = str;
 
 	while (1) {
 		vTaskDelay(100);
@@ -81,57 +84,58 @@ extern "C" void app_main() {
 		if (lastSecond != timeinfo.tm_sec) {
 			lastSecond = timeinfo.tm_sec; // every second
 			timeStamp++;
-		
-			// displayMssg.displayItem = DISPLAY_ITEM_STATUSLINE;
-			// switch (connectStatus) {
-			// case CONNECT_READY:
-			// 	if (!ipShown) {
-			// 		sprintf(str, "%s", myIpAddress);
-			// 		ipShowTimer = IPSHOWTIME;
-			// 		ipShown = true;
-			// 	} else {
-			// 		if (ipShowTimer > 0)
-			// 			ipShowTimer--;
-			// 		else
-			// 			str[0] = 0; // clear statusline
-			// 	}
-			// 	break;
-
-			// case WPS_ACTIVE:
-			// 	toggle = !toggle;
-			// 	if (toggle)
-			// 		sprintf(str, "Geen wifi");
-			// 	else
-			// 		sprintf(str, "Druk WPS op modem");
-			// 	break;
-
-			// case CONNECT_AP: // accespoint active
-			// 	toggle = !toggle;
-			// 	if (toggle)
-			// 		sprintf(str, "Wifi netwerk");
-			// 	else
-			// 		sprintf(str, "%s actief", userSettings.moduleName);
-			// 	break;
-
-			// case CONNECT_READY_AP:
-			// 	sprintf(str, "AP IP:192.168.4.1");
-			// 	break;
-
-			// default:
-			// 	ipShown = false;
-			// 	toggle = !toggle;
-			// 	if (toggle)
-			// 		sprintf(str, "Verbinden met:");
-			// 	else
-			// 		snprintf(str, (volatile size_t){sizeof(str)}, wifiSettings.SSID);
-			// 	break;
-			// }
-
-			// if (xQueueSend(displayMssgBox, &displayMssg, 0) == pdPASS)
-			// 	xQueueReceive(displayReadyMssgBox, &dummy, 500);
-
-			// ESP_LOGI(TAG, "Free: %d", heap_caps_get_free_size(MALLOC_CAP_DMA));
-			// ESP_LOGI(TAG, "MinFree: %d", heap_caps_get_minimum_free_size(MALLOC_CAP_DMA));
 		}
+
 	}
+
+	// displayMssg.displayItem = DISPLAY_ITEM_STATUSLINE;
+	// switch (connectStatus) {
+	// case CONNECT_READY:
+	// 	if (!ipShown) {
+	// 		sprintf(str, "%s", myIpAddress);
+	// 		ipShowTimer = IPSHOWTIME;
+	// 		ipShown = true;
+	// 	} else {
+	// 		if (ipShowTimer > 0)
+	// 			ipShowTimer--;
+	// 		else
+	// 			str[0] = 0; // clear statusline
+	// 	}
+	// 	break;
+
+	// case WPS_ACTIVE:
+	// 	toggle = !toggle;
+	// 	if (toggle)
+	// 		sprintf(str, "Geen wifi");
+	// 	else
+	// 		sprintf(str, "Druk WPS op modem");
+	// 	break;
+
+	// case CONNECT_AP: // accespoint active
+	// 	toggle = !toggle;
+	// 	if (toggle)
+	// 		sprintf(str, "Wifi netwerk");
+	// 	else
+	// 		sprintf(str, "%s actief", userSettings.moduleName);
+	// 	break;
+
+	// case CONNECT_READY_AP:
+	// 	sprintf(str, "AP IP:192.168.4.1");
+	// 	break;
+
+	// default:
+	// 	ipShown = false;
+	// 	toggle = !toggle;
+	// 	if (toggle)
+	// 		sprintf(str, "Verbinden met:");
+	// 	else
+	// 		snprintf(str, (volatile size_t){sizeof(str)}, wifiSettings.SSID);
+	// 	break;
+	// }
+
+	// if (xQueueSend(displayMssgBox, &displayMssg, 0) == pdPASS)
+	// 	xQueueReceive(displayReadyMssgBox, &dummy, 500);
+
+	// ESP_LOGI(TAG, "Free: %d", heap_caps_get_free_size(MALLOC_CAP_DMA));
+	// ESP_LOGI(TAG, "MinFree: %d", heap_caps_get_minimum_free_size(MALLOC_CAP_DMA));
 }
