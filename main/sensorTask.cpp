@@ -219,31 +219,35 @@ void sensorTask(void *parameters) {
 		if (ens16x.update() == RESULT_OK) {
 			if (ens16x.hasNewData()) {
 				timeOutTimer = TIMEOUT;
-				printf("\nAQI UBA:");
-				printf("%d", (uint8_t)ens16x.getAirQualityIndex_UBA());
-				printf("\tTVOC:");
-				printf("%d", ens16x.getTvoc());
-				printf("\tECO2:");
-				printf("%d", ens16x.getEco2());
 
 				AQi = ens16x.getAirQualityIndex_UBA();
 				Tvoc = ens16x.getTvoc();
 				ECO2 = ens16x.getEco2();
+
+				printf("\nAQI UBA:");
+				printf("%d", (uint8_t)AQi);
+				printf("\tTVOC:");
+				printf("%d", Tvoc);
+				printf("\tECO2:");
+				printf("%d",ECO2);
+		
 			}
 
 			if (ens16x.hasNewGeneralPurposeData()) {
-				printf("\nRS0:");
-				printf("%ld", ens16x.getRs0());
-				printf("\tRS1:");
-				printf("%ld", ens16x.getRs1());
-				printf("\tRS2:");
-				printf("%ld", ens16x.getRs2());
-				printf("\tRS3:");
-				printf("%ld", ens16x.getRs3());
 				Rs0 = ens16x.getRs0();
 				Rs1 = ens16x.getRs1();
 				Rs2 = ens16x.getRs2();
 				Rs3 = ens16x.getRs3();
+				
+				printf("\nRS0:");
+				printf("%ld", Rs0);
+				printf("\tRS1:");
+				printf("%ld", Rs1);
+				printf("\tRS2:");
+				printf("%ld", Rs2);
+				printf("\tRS3:");
+				printf("%ld", Rs3);
+				
 				data_ready_flag = true;
 			}
 		}
@@ -258,8 +262,8 @@ void sensorTask(void *parameters) {
 			if (data_ready_flag) {
 				data_ready_flag = false;
 				values[0] = AQi;
-				values[1] = Tvoc;
-				values[2] = ECO2;
+				values[1] = ECO2;
+				values[2] = Tvoc;
 				values[3] = Rs0;
 				values[4] = Rs1;
 				values[5] = Rs2;
