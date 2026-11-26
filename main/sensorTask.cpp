@@ -22,13 +22,13 @@
 #define DAYLOGINTERVAL 5   // minutes
 #define HOURLOGINTERVAL 10 // seconds
 
-#define AVERAGES1 1								  // number of values to average first
+#define AVERAGES1 1									  // number of values to average first
 #define AVERAGES2 ((DAYLOGINTERVAL * 60) / AVERAGES1) // number of values to average secondary for daylog
-#define SKIPFIRSTSAMPLES 4;						  // skip from log
+#define SKIPFIRSTSAMPLES 4;							  // skip from log
 
 static const char *TAG = "sensorTask";
 
-const char measLabelTxt[][20] = {{"AQi"}, {"ECO2"}, {"Tvoc"}, {"Rs0"}, {"Rs1"}, {"Rs2"}, {"Rs3"}};
+const char measLabelTxt[][20] = {{"Luchtkwaliteitindex"}, {"CO2"}, {"TVOC"}, {"Rs0"}, {"Rs1"}, {"Rs2"}, {"Rs3"}};
 
 // extern i2c_master_dev_handle_t SPS30_dev_handle;
 extern int scriptState;
@@ -41,10 +41,14 @@ uint32_t Rs1;
 uint32_t Rs2;
 uint32_t Rs3;
 uint8_t AQi;
+typedef struct {
+	int values[7];
+} lastVal_t;
 
-log_t lastVal;
+log_t logLastVal;
+lastVal_t lastVal;
 
-//I2C (Wire): GPIO 8 (SDA) and GPIO 9 (SCL). You can reassign pins in code before Wire.begin() (e.g., Wire.begin(sdaPin, sclPin)).
+// I2C (Wire): GPIO 8 (SDA) and GPIO 9 (SCL). You can reassign pins in code before Wire.begin() (e.g., Wire.begin(sdaPin, sclPin)).
 
 // esp_err_t SPS30AddDeviceToBus(i2c_master_bus_handle_t *bus_handle) {
 
@@ -203,12 +207,12 @@ void sensorTask(void *parameters) {
 	//   for (repetition = 0; repetition < 50; repetition++) {
 	while (1) {
 		vTaskDelay(100 / portTICK_PERIOD_MS);
-		if ( timeOutTimer)
+		if (timeOutTimer)
 			timeOutTimer--;
 		else {
 			printf("ENS160 timeout\n\r");
-    		ens16x.reset();                                                                         
-   			ens16x.startStandardMeasure();
+			ens16x.reset();
+			ens16x.startStandardMeasure();
 			timeOutTimer = TIMEOUT;
 		}
 		statusError = false;
@@ -264,15 +268,25 @@ void sensorTask(void *parameters) {
 					skipFirstSamplesFromLog--;
 				else {
 					for (int n = 0; n < NR_MEASVALUES; n++) { // average mc's
-					//	averager1[n].write((int)1000.0 * values[n]);
-						averager1[n].write(values[n]); // value R2 > 100000 
+						switch (n) {
+						case 0:
+						case 1:
+						case 2:
+						case 4:
+							averager1[n].write((int)1000.0 * values[n]);
+							break;
+						default:
+							averager1[n].write(values[n]); // value R0 ,2,3   > 100000
+							break;
+						}
 						avGvalues[n] = averager1[n].average() / 1000;
+						lastVal.values[n] = (int)avGvalues[n]; // for cgi sensorInfo
+						logLastVal.values[n] = avGvalues[n];   // for cgi pringtlog;
 					}
+					logLastVal.timeStamp = timeStamp;
 					displayMssg.values = &avGvalues[0];
 					if (displayMssgBox != NULL)
 						xQueueSend(displayMssgBox, &displayMssg, 0);
-					memcpy(lastVal.values, avGvalues, sizeof(logValue.values));
-					lastVal.timeStamp = timeStamp;
 
 					time(&now);
 					localtime_r(&now, &timeinfo);
@@ -288,12 +302,12 @@ void sensorTask(void *parameters) {
 						else {
 							logHourPrescaler = HOURLOGINTERVAL - 1;
 
-							for (int n = 0; n < NR_MEASVALUES ; n++) {
+							for (int n = 0; n < NR_MEASVALUES; n++) {
 								avGvalues[n] = averager1[n].average();
 								averager2[n].write(avGvalues[n]); // second order for daylog
 							}
 
-							for (int n = 0; n < NR_MEASVALUES; n++) {	  // average mc's
+							for (int n = 0; n < NR_MEASVALUES; n++) {		  // average mc's
 								avGvalues[n] = averager1[n].average() / 1000; // contains last samples
 							}
 							memcpy(logValue.values, avGvalues, sizeof(logValue.values));
@@ -307,8 +321,8 @@ void sensorTask(void *parameters) {
 							if (logDayPrescaler > 0) {
 								logDayPrescaler--;
 							} else {
-								logDayPrescaler = DAYLOGINTERVAL - 1;		  // reset prescaler
-								for (int n = 0; n < NR_MEASVALUES ; n++) { // average mc's
+								logDayPrescaler = DAYLOGINTERVAL - 1;	  // reset prescaler
+								for (int n = 0; n < NR_MEASVALUES; n++) { // average mc's
 									avGvalues[n] = averager2[n].average() / 1000;
 								}
 								memcpy(logValue.values, avGvalues, sizeof(logValue.values));
@@ -389,7 +403,7 @@ int getRTMeasValuesScript(char *pBuffer, int count) {
 	switch (scriptState) {
 	case 0:
 		scriptState++;
-		len += printLog(&lastVal, pBuffer);
+		len += printLog(&logLastVal, pBuffer);
 		return len;
 		break;
 	default:
@@ -398,12 +412,12 @@ int getRTMeasValuesScript(char *pBuffer, int count) {
 	return 0;
 }
 
-const CGIdesc_t sensorInfoDescriptorTable[] = {{measLabelTxt[0], &lastVal.values[0], FLT, 1}, {measLabelTxt[1], &lastVal.values[1], FLT, 1},
-											   {measLabelTxt[2], &lastVal.values[2], FLT, 1}, {measLabelTxt[3], &lastVal.values[3], FLT, 1},
-											   {measLabelTxt[4], &lastVal.values[4], FLT, 1}, {measLabelTxt[5], &lastVal.values[5], FLT, 1},
-											   {measLabelTxt[6], &lastVal.values[6], FLT, 1}, {NULL, NULL, INT, 0}};
+const CGIdesc_t sensorInfoDescriptorTable[] = {{measLabelTxt[0], &lastVal.values[0], INT, 1}, {measLabelTxt[1], &lastVal.values[1], INT, 1},
+											   {measLabelTxt[2], &lastVal.values[2], INT, 1}, {measLabelTxt[3], &lastVal.values[3], INT, 1},
+											   {measLabelTxt[4], &lastVal.values[4], INT, 1}, {measLabelTxt[5], &lastVal.values[5], INT, 1},
+											   {measLabelTxt[6], &lastVal.values[6], INT, 1}, {NULL, NULL, INT, 0}};
 
-//const CGIdesc_t sensorInfoDescriptorTable[] = {{measLabelTxt[5], &lastVal.values[5], FLT, 1}, {NULL, NULL, INT, 0}};
+// const CGIdesc_t sensorInfoDescriptorTable[] = {{measLabelTxt[5], &lastVal.values[5], FLT, 1}, {NULL, NULL, INT, 0}};
 
 int getSensorInfoScript(char *pBuffer, int count) {
 	int len = 0;
